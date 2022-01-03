@@ -47,7 +47,8 @@
 !
 !     This function is used to initialize an MQC_Bit object. Input dummy
 !     argument <nBits> is the number of bits requested by the user. Keep in mind
-!     that bit 0 counts as a bit in this count.
+!     that bit 0 counts as a bit in this count. As such, requesting 8 bits
+!     provides bit numbers 0-7.
 !
 !     H. P. Hratchian, 2021.
 !
@@ -80,20 +81,14 @@
       mqc_bits_out%nIntegers = nIntegers
       Allocate(mqc_bits_out%integerList(nIntegers))
       mqc_bits_out%integerList = 0
-
-      write(*,*)
-      write(*,*)' Init: nBits     = ',nBits
-      write(*,*)'       nIntegers = ',nIntegers
-      write(*,*)'       bits/int  = ',mqc_bits_out%nBitsPerInteger
-      write(*,*)
-
 !
       return
       end function MQC_Bits_Initialize
 !
 !
-!PROCEDURE MQC_Bits_Write
-      subroutine MQC_Bits_Write(mqc_bits_in,iUnit)
+!PROCEDURE MQC_Bits_Print
+      subroutine MQC_Bits_Print(mqc_bits_in,iUnit,Header,Blank_At_Top,  &
+        Blank_At_Bottom,verbose)
 !
 !     This subroutine is used to print out the bits in mqc_bits_in.
 !
@@ -103,37 +98,76 @@
       implicit none
       type(mqc_bits),intent(in)::mqc_bits_in
       integer(kind=int64),intent(in),optional::iUnit
+      character(len=*),intent(in),optional::Header
+      logical,intent(in),optional::Blank_At_Top,Blank_At_Bottom,verbose
 !
       integer(kind=int64)::my_iUnit,i
+      logical::my_verbose
       character(len=256)::formatText,charTemp
 !
 !
 !     Format Statements
 !
- 1000 format(1x,i2,': ',B5.5)
+ 1000 format(1x,'Binary number: ')
+ 1100 format(1x,A,' ')
 !
 !
-!     Start by setting up my_iUnit.
+!     Start by setting up my_iUnit and my_verbose.
 !
       if(PRESENT(iUnit)) then
         my_iUnit = iUnit
       else
         my_iUnit = 6
       endIf
+      my_verbose = .false.
+      if(PRESENT(verbose)) my_verbose = verbose
+!
+!     Print blank at top if requested.
+!
+      if(PRESENT(Blank_At_Top)) then
+        if(Blank_At_Top) write(my_iUnit)
+      endIf
 !
 !     Set up the format string.
 !
       charTemp = num2char(mqc_bits_in%nBitsPerInteger)
-      formatText = '(1x,I2,'':'',B'//TRIM(charTemp)//'.'//TRIM(charTemp)//')'
+      if(my_verbose) then
+        if(PRESENT(Header)) then
+          write(my_iUnit,1100) TRIM(Header)
+        else
+          write(my_iUnit,1000)
+        endIf
+        formatText = '(1x,I2,'':'',B'//TRIM(charTemp)//'.'//TRIM(charTemp)//')'
+      else
+        if(PRESENT(Header)) then
+          write(UNIT=my_iUnit,FMT=1100,ADVANCE="no") TRIM(Header)
+        else
+          write(UNIT=my_iUnit,FMT=1000,ADVANCE="no")
+        endIf
+        formatText = '(B'//TRIM(charTemp)//'.'//TRIM(charTemp)//')'
+      endIf
 !
-!     Loop over integers in the bit list and write them out in binary form.
+!     Write out the binary number.
 !
-      do i = 1,mqc_bits_in%nIntegers
-        write(UNIT=my_iUnit,FMT=formatText) i,mqc_bits_in%integerList(i)
-      endDo
+      if(my_verbose) then
+        do i = 1,mqc_bits_in%nIntegers
+          write(UNIT=my_iUnit,FMT=formatText,ADVANCE="yes") i,mqc_bits_in%integerList(i)
+        endDo
+      else
+        do i = mqc_bits_in%nIntegers,2,-1
+          write(UNIT=my_iUnit,FMT=formatText,ADVANCE="no") mqc_bits_in%integerList(i)
+        endDo
+        write(UNIT=my_iUnit,FMT=formatText,ADVANCE="yes") mqc_bits_in%integerList(1)
+      endIf
+!
+!     Print blank at bottom if requested.
+!
+      if(PRESENT(Blank_At_Bottom)) then
+        if(Blank_At_Bottom) write(my_iUnit)
+      endIf
 !
       return
-      end subroutine MQC_Bits_Write
+      end subroutine MQC_Bits_Print
 !
 !
 !PROCEDURE MQC_BitPosition
@@ -235,43 +269,105 @@
 !
       return
       end subroutine MQC_IBitClr
-!hph+
-!!
-!!
-!!PROCEDURE MQC_IBitAnd
-!      subroutine MQC_IBitAnd(mqc_bits_in1,mqc_bits_in2,mqc_bits_out)
-!!
-!!     This subroutine is used to do AND operation on two MQC_Bits objects,
-!!     mqc_bits_in1 and mqc_bits_in2.
-!!
-!!     H. P. Hratchian, 2022.
-!!
-!!
-!      implicit none
-!      type(mqc_bits),intent(in)::mqc_bits_in1,mqc_bits_in2
-!      type(mqc_bits),intent(out)::mqc_bits_out
-!!
-!      integer(kind=int64)::i
-!!
-!!
-!!     Do the work.
-!!
-!      if((mqc_bits_in1%nIntegers.eq.mqc_bits_in2%nIntegers).and.
-!        (mqc_bits_in1%nBits.eq.mqc_bits_in2%nBits)) then
-!        mqc_bits_out = MQC_Bits_Initialize(mqc_bits_in1%nBits)
-!        do i = 1,mqc_bits_in1%nIntegers
 !
 !
+!PROCEDURE MQC_IAnd
+      function MQC_IAnd(mqc_bits_in1,mqc_bits_in2) result(mqc_bits_out)
+!
+!     This function carries out the IAnd operation on two MQC_Bit objects. The
+!     output is the resulting MQC_Bit object.
+!
+!     H. P. Hratchian, 2022.
 !
 !
+      implicit none
+      type(mqc_bits),intent(in)::mqc_bits_in1,mqc_bits_in2
+      type(mqc_bits),intent(out)::mqc_bits_out
 !
-!        endDo
-!      else
-!        call mqc_error('MQC_BitAnd: Non-conformable bit objects.')
-!      endIf
-!!
-!      return
-!      end subroutine MQC_IBitAnd
-!hph-
+      integer(kind=int64)::i
+!
+!
+!     Do the work.
+!
+      if((mqc_bits_in1%nIntegers.eq.mqc_bits_in2%nIntegers).and.  &
+        (mqc_bits_in1%nBits.eq.mqc_bits_in2%nBits)) then
+        mqc_bits_out = MQC_Bits_Initialize(mqc_bits_in1%nBits)
+        do i = 1,mqc_bits_in1%nIntegers
+          mqc_bits_out%integerList(i) =   &
+            IAND(mqc_bits_in1%integerList(i),mqc_bits_in2%integerList(i))
+        endDo
+      else
+        call mqc_error('MQC_IAnd: Non-conformable bit objects.')
+      endIf
+!
+      return
+      end function MQC_IAnd
+!
+!
+!PROCEDURE MQC_IEOR
+      function MQC_IEOR(mqc_bits_in1,mqc_bits_in2) result(mqc_bits_out)
+!
+!     This function carries out the EXCLUSIVE OR operation on two MQC_Bit
+!     objects. The output is the resulting MQC_Bit object.
+!
+!     H. P. Hratchian, 2022.
+!
+!
+      implicit none
+      type(mqc_bits),intent(in)::mqc_bits_in1,mqc_bits_in2
+      type(mqc_bits),intent(out)::mqc_bits_out
+!
+      integer(kind=int64)::i
+!
+!
+!     Do the work.
+!
+      if((mqc_bits_in1%nIntegers.eq.mqc_bits_in2%nIntegers).and.  &
+        (mqc_bits_in1%nBits.eq.mqc_bits_in2%nBits)) then
+        mqc_bits_out = MQC_Bits_Initialize(mqc_bits_in1%nBits)
+        do i = 1,mqc_bits_in1%nIntegers
+          mqc_bits_out%integerList(i) =   &
+            IEOR(mqc_bits_in1%integerList(i),mqc_bits_in2%integerList(i))
+        endDo
+      else
+        call mqc_error('MQC_IEOR: Non-conformable bit objects.')
+      endIf
+!
+      return
+      end function MQC_IEOR
+!
+!
+!PROCEDURE MQC_IOR
+      function MQC_IOR(mqc_bits_in1,mqc_bits_in2) result(mqc_bits_out)
+!
+!     This function carries out the INCLUSIVE OR operation on two MQC_Bit
+!     objects. The output is the resulting MQC_Bit object.
+!
+!     H. P. Hratchian, 2022.
+!
+!
+      implicit none
+      type(mqc_bits),intent(in)::mqc_bits_in1,mqc_bits_in2
+      type(mqc_bits),intent(out)::mqc_bits_out
+!
+      integer(kind=int64)::i
+!
+!
+!     Do the work.
+!
+      if((mqc_bits_in1%nIntegers.eq.mqc_bits_in2%nIntegers).and.  &
+        (mqc_bits_in1%nBits.eq.mqc_bits_in2%nBits)) then
+        mqc_bits_out = MQC_Bits_Initialize(mqc_bits_in1%nBits)
+        do i = 1,mqc_bits_in1%nIntegers
+          mqc_bits_out%integerList(i) =   &
+            IOR(mqc_bits_in1%integerList(i),mqc_bits_in2%integerList(i))
+        endDo
+      else
+        call mqc_error('MQC_IOR: Non-conformable bit objects.')
+      endIf
+!
+      return
+      end function MQC_IOR
+
 
       end module MQC_Binary
