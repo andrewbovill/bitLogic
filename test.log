@@ -1,0 +1,38 @@
+ Binary number: 00000000
+ bitTest1 with 0,2,5 turned ON:_ 00100101
+ Binary number: 
+  1:01
+  2:01
+  3:10
+  4:00
+ 
+ Object bitTest1 bit number 0 equals T.
+ Object bitTest1 bit number 1 equals F.
+ Object bitTest1 bit number 2 equals T.
+ Object bitTest1 bit number 3 equals F.
+ Object bitTest1 bit number 4 equals F.
+ Object bitTest1 bit number 5 equals T.
+ Object bitTest1 bit number 6 equals F.
+ Object bitTest1 bit number 7 equals F.
+ bitTest2 with 0,5,7 turned ON:_ 10100001
+ 
+  Trying out PopCnt...
+  PopCnt(bitTest1) =                         3
+  PopCnt(bitTest2) =                         3
+ 
+  Trying out IAnd...
+ bitTest1              = 00100101
+ bitTest2              = 10100001
+ bitTest1.AND.bitTest2 = 00100001
+ 
+  Trying out IEOR...
+ bitTest1              = 00100101
+ bitTest2              = 10100001
+ bitTest1.XOR.bitTest2 = 10000100
+ 
+  Trying out IOR...
+ bitTest1              = 00100101
+ bitTest2              = 10100001
+ bitTest1.OR.bitTest2  = 10100101
+ 
+  All Done.

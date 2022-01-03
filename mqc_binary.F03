@@ -207,7 +207,7 @@
 !
 !
       implicit none
-      type(mqc_bits),intent(inOut)::mqc_bits_in
+      type(mqc_bits),intent(In)::mqc_bits_in
       integer(kind=int64),intent(in)::bitNum
       logical,intent(out)::bitValue
 !
@@ -368,6 +368,33 @@
 !
       return
       end function MQC_IOR
+!
+!
+!PROCEDURE MQC_PopCnt
+      function MQC_PopCnt(mqc_bits_in) result(bits_on)
+!
+!     This function returns the number of "ON" bits in input dummy argument
+!     <mqc_bits_in>. The output of the function is an int64 integer.
+!
+!     H. P. Hratchian, 2022.
+!
+!
+      implicit none
+      type(mqc_bits),intent(in)::mqc_bits_in
+      integer(kind=int64),intent(out)::bits_on
+!
+      integer(kind=int64)::i
+!
+!
+!     Do the work.
+!
+      bits_on = 0
+      do i = 0,mqc_bits_in%nBits-1
+        if(mqc_BTest(mqc_bits_in,i)) bits_on = bits_on+1
+      endDo
+!
+      return
+      end function MQC_PopCnt
 
 
       end module MQC_Binary

@@ -54,6 +54,13 @@ include "mqc_binary.F03"
       call MQC_IBitSet(bitTest2,7_int64)
       call MQC_Bits_Print(bitTest2,header='bitTest2 with 0,5,7 turned ON:_')
 !
+!     Try out POPCNT.
+!
+      write(iOut,*)
+      write(iOut,*)' Trying out PopCnt...'
+      write(iOut,*)' PopCnt(bitTest1) = ',MQC_PopCnt(bitTest1)
+      write(iOut,*)' PopCnt(bitTest2) = ',MQC_PopCnt(bitTest2)
+!
 !     Now, try IAnd, IEOR, and IOR.
 !
       write(iOut,*)
