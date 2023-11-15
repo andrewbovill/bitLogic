@@ -14,7 +14,7 @@
 !
 !     mqc_bits
       type :: mqc_bits
-        integer(kind=int64)::nBitsPerInteger=2
+        integer(kind=int64)::nBitsPerInteger=3
         integer(kind=int64)::nBits,nIntegers
         integer(kind=int64),dimension(:),allocatable::integerList
       end type mqc_bits
