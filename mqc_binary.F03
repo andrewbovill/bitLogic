@@ -396,5 +396,22 @@
       return
       end function MQC_PopCnt
 
+      integer function factorial(j)
+!     A small function to compute the factorial of the number j
+!     i.e. 2!
+!
+      implicit none
+      integer :: i,j,k
+!     j is your input number to obtain the factorial
+!     i.e. j! = k 
+
+      factorial = 1
+
+      do i = 1,j
+        factorial=(i*1)*factorial
+      end do  
+
+      end function factorial
+
 
       end module MQC_Binary
