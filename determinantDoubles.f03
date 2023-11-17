@@ -88,14 +88,17 @@ include "mqc_binary.F03"
           substituted determinants')
       end if
 
-      nOV = (factorial(nOcc)/nOcc)*(factorial(nVirt)/nVirt)
+      nOV = (((nOcc*(nOcc-1))/2)*((nVirt*(nVirt-1))/2))
       Allocate(iDetDoubles(nOV))
+
+!     nOV = (factorial(nOcc)/nOcc)*(factorial(nVirt)/nVirt)
+!     Allocate(iDetDoubles(nOV))
 
       i = 0
       do ii = 0,nOcc
-        do ia = ii+1,nOcc
+        do ia = ii+1,nOcc-1
             do jj = 0,nVirt
-              do ja = jj+1,nVirt
+              do ja = jj+1,nVirt-1
                 i = i + 1
                 if(i.gt.nOV) then
                   stop
@@ -110,10 +113,6 @@ include "mqc_binary.F03"
             end do
         endDo
       endDo
-
-      write(*,*) "Andrew factorial of 3 is : ", factorial(3)
-      write(*,*) "Andrew factorial of 10 is : ", factorial(10)
-      write(*,*) "Andrew Size of doubles determinants : ", size(iDetDoubles)
 
 !
 !     That's the end of the program...
